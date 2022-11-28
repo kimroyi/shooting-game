@@ -29,6 +29,7 @@ class Bullet {
                 //총알이 죽게됨 적군의 우주선이 없어짐, 점수 획득
                 SootingGame.updateScore();
                 this.alive = false; // 죽은 총알
+                this.fire = true;
                 SootingGame.deleteEnemy(i);
             }
         }
@@ -81,7 +82,8 @@ const SootingGame = (() => {
         spaceship: "images/spaceship.png",
         bullet: "images/bullet.png",
         enemy: "images/enemy.png",
-        gameOver: "images/gameover.jpg"
+        gameOver: "images/gameover.jpg",
+        fire: "images/fire.png"
     }
 
     let canvas,
@@ -91,6 +93,7 @@ const SootingGame = (() => {
         bulletImage,
         enemyImage,
         gameOverImage,
+        fireImage,
         spaceshipX,
         spaceshipY,
         keysDown = {},
@@ -149,6 +152,9 @@ const SootingGame = (() => {
 
         gameOverImage = new Image();
         gameOverImage.src = images.gameOver;
+
+        fireImage = new Image();
+        fireImage.src = images.fire;
     }
 
     /**
@@ -288,6 +294,11 @@ const SootingGame = (() => {
         bulletList.forEach((bullet) => {
             if (bullet.alive) {
                 ctx.drawImage(bulletImage, bullet.x, bullet.y);
+            } else {
+                ctx.drawImage(fireImage, bullet.x, bullet.y);
+                setTimeout(() => {
+                    bullet.fire = false;
+                }, 100);
             }
         });
 

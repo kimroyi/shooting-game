@@ -25,14 +25,20 @@ class Bullet {
         for (let i = 0; i < enemyList.length; i++) {
             // 총알.y <= 적군.y AND
             // 총알.x >= 적군.x AND 총알.x <= 적군.x + 적군의 넓이
-            if (this.y <= enemyList[i].y && this.x >= enemyList[i].x / 2 && this.x <= enemyList[i].x) {
+            if (this.y <= enemyList[i].y && this.x >= enemyList[i].x - 30 && this.x <= enemyList[i].x + 10) {
                 //총알이 죽게됨 적군의 우주선이 없어짐, 점수 획득
                 SootingGame.updateScore();
                 this.alive = false; // 죽은 총알
                 SootingGame.deleteEnemy(i);
             }
         }
-    }
+    };
+
+    checkAlive = () => {
+        if (0 > this.y) {
+            this.alive = false; // 죽은 총알
+        }
+    };
 }
 
 /**
@@ -52,15 +58,17 @@ function generateRandomValue(min, max) {
  */
 class Enemy {
     constructor() {
+        this.enemyImageWidth = SootingGame.getEnemyImage().width;
+        this.enemyImageHeight = SootingGame.getEnemyImage().height;
         this.y = 0;
-        this.x = generateRandomValue(0, SootingGame.getCanvas().width - 48);
+        this.x = generateRandomValue(this.enemyImageWidth, SootingGame.getCanvas().width - this.enemyImageWidth);
         SootingGame.addEnemy(this);
     }
 
     update = () => {
         this.y += 2; // 적군의 속도 조절
 
-        if (this.y >= SootingGame.getCanvas().height - 48) {
+        if (this.y >= SootingGame.getCanvas().height - this.enemyImageHeight) {
             SootingGame.setGameOver();
         }
     }
@@ -150,8 +158,13 @@ const SootingGame = (() => {
      * @author Royi
      */
     let _setupSpaceShipLocaion = () => {
-        spaceshipX = canvas.width / 2 - spaceshipImage.width / 2;
-        spaceshipY = canvas.height - spaceshipImage.height;
+        if (spaceshipImage.width) {
+            spaceshipX = canvas.width / 2 - spaceshipImage.width / 2;
+            spaceshipY = canvas.height - spaceshipImage.height;
+        } else {
+            spaceshipX = canvas.width / 2 - 64;
+            spaceshipY = canvas.height - 64;
+        }
     }
 
     /**
@@ -248,6 +261,9 @@ const SootingGame = (() => {
             if (bullet.alive) {
                 bullet.update();
                 bullet.checkHit();
+                bullet.checkAlive();
+            } else {
+                _deleteBullet();
             }
         });
 
@@ -354,6 +370,29 @@ const SootingGame = (() => {
     }
 
     /**
+     * @description 죽은 총알 배열에서 제거
+     * @type {function} 
+     * @returns {void}
+     * @author Royi
+     */
+    let _deleteBullet = () => {
+        bulletList = bulletList.filter(item => item.alive);
+    }
+
+    /**
+     * @description 적군 이미지 값 조회
+     * @type {function}
+     * @returns {object} - 적군이미지 가로, 높이 값 조회
+     * @author Royi
+     */
+    let _getEnemyImage = () => {
+        return {
+            width: enemyImage.width,
+            height: enemyImage.height
+        }
+    }
+
+    /**
      * @description 캔버스 반환
      * @type {function}
      * @returns {object}
@@ -383,7 +422,8 @@ const SootingGame = (() => {
         addEnemy: _addEnemy,
         getEnemys: _getEnemys,
         getCanvas: _getCanvas,
-        setGameOver: _setGameOver
+        setGameOver: _setGameOver,
+        getEnemyImage: _getEnemyImage
     }
 })();
 

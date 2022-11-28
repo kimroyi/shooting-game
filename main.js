@@ -1,6 +1,6 @@
 /**
  * @description javascript Shooting Game
- * @version 1.0.0
+ * @version 1.0.1
  * @author Royi
  */
 
@@ -28,7 +28,9 @@ class Bullet {
             if (this.y <= enemyList[i].y && this.x >= enemyList[i].x - 30 && this.x <= enemyList[i].x + 10) {
                 //총알이 죽게됨 적군의 우주선이 없어짐, 점수 획득
                 SootingGame.updateScore();
+                SootingGame.updateLevel();
                 this.alive = false; // 죽은 총알
+                this.fire = true;
                 SootingGame.deleteEnemy(i);
             }
         }
@@ -65,8 +67,8 @@ class Enemy {
         SootingGame.addEnemy(this);
     }
 
-    update = () => {
-        this.y += 2; // 적군의 속도 조절
+    update = (level) => {
+        this.y += 2 + level; // 적군의 속도 조절
 
         if (this.y >= SootingGame.getCanvas().height - this.enemyImageHeight) {
             SootingGame.setGameOver();
@@ -81,7 +83,8 @@ const SootingGame = (() => {
         spaceship: "images/spaceship.png",
         bullet: "images/bullet.png",
         enemy: "images/enemy.png",
-        gameOver: "images/gameover.jpg"
+        gameOver: "images/gameover.jpg",
+        fire: "images/fire.png"
     }
 
     let canvas,
@@ -91,10 +94,12 @@ const SootingGame = (() => {
         bulletImage,
         enemyImage,
         gameOverImage,
+        fireImage,
         spaceshipX,
         spaceshipY,
         keysDown = {},
         score = 0,
+        level = 1,
         gameOver = false, // true이면 게임이 끝남, false이면 게임이 안끝남
         bulletList = [], // 총알들을 저장하는 리스트
         enemyList = [];
@@ -149,6 +154,9 @@ const SootingGame = (() => {
 
         gameOverImage = new Image();
         gameOverImage.src = images.gameOver;
+
+        fireImage = new Image();
+        fireImage.src = images.fire;
     }
 
     /**
@@ -268,7 +276,7 @@ const SootingGame = (() => {
         });
 
         enemyList.forEach((enemy) => {
-            enemy.update();
+            enemy.update(level);
         });
     }
 
@@ -282,12 +290,18 @@ const SootingGame = (() => {
         ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
         ctx.drawImage(spaceshipImage, spaceshipX, spaceshipY);
         ctx.fillText(`Score:${score}`, 20, 20);
+        ctx.fillText(`Lv:${level}`, 340, 20);
         ctx.fillStyle = "white";
         ctx.font = "20px Arial";
 
         bulletList.forEach((bullet) => {
             if (bullet.alive) {
                 ctx.drawImage(bulletImage, bullet.x, bullet.y);
+            } else {
+                ctx.drawImage(fireImage, bullet.x, bullet.y);
+                setTimeout(() => {
+                    bullet.fire = false;
+                }, 100);
             }
         });
 
@@ -304,6 +318,18 @@ const SootingGame = (() => {
      */
     let _updateScore = () => {
         score++;
+    }
+
+    /**
+     * @description 레벨 업데이트
+     * @type {function}
+     * @returns {void}
+     * @author Royi
+     */
+    let _updateLevel = () => {
+        if ((score * level) % 5 === 0) {
+            level++;
+        }
     }
 
     /**
@@ -423,7 +449,8 @@ const SootingGame = (() => {
         getEnemys: _getEnemys,
         getCanvas: _getCanvas,
         setGameOver: _setGameOver,
-        getEnemyImage: _getEnemyImage
+        getEnemyImage: _getEnemyImage,
+        updateLevel: _updateLevel
     }
 })();
 

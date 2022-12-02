@@ -22,16 +22,29 @@ class Bullet {
 
     checkHit = () => {
         let enemyList = SootingGame.getEnemys();
-        for (let i = 0; i < enemyList.length; i++) {
-            // 총알.y <= 적군.y AND
-            // 총알.x >= 적군.x AND 총알.x <= 적군.x + 적군의 넓이
-            if (this.y <= enemyList[i].y && this.x >= enemyList[i].x - 30 && this.x <= enemyList[i].x + 10) {
-                //총알이 죽게됨 적군의 우주선이 없어짐, 점수 획득
+        let isBoss = SootingGame.getBoss();
+        let bossY = SootingGame.getBossImage().height;
+        console.log(this);
+        if (isBoss) {
+            if (this.y <= bossY / 2) {
                 SootingGame.updateScore();
-                SootingGame.updateLevel();
+                SootingGame.updateLevel("boss");
                 this.alive = false; // 죽은 총알
                 this.fire = true;
-                SootingGame.deleteEnemy(i);
+                SootingGame.updateBoss();
+            }
+        } else {
+            for (let i = 0; i < enemyList.length; i++) {
+                // 총알.y <= 적군.y AND
+                // 총알.x >= 적군.x AND 총알.x <= 적군.x + 적군의 넓이
+                if (this.y <= enemyList[i].y && this.x >= enemyList[i].x - 30 && this.x <= enemyList[i].x + 10) {
+                    //총알이 죽게됨 적군의 우주선이 없어짐, 점수 획득
+                    SootingGame.updateScore();
+                    SootingGame.updateLevel("enemy");
+                    this.alive = false; // 죽은 총알
+                    this.fire = true;
+                    SootingGame.deleteEnemy(i);
+                }
             }
         }
     };
@@ -84,7 +97,8 @@ const SootingGame = (() => {
         bullet: "images/bullet.png",
         enemy: "images/enemy.png",
         gameOver: "images/gameover.jpg",
-        fire: "images/fire.png"
+        fire: "images/fire.png",
+        boss: "images/boss.png"
     }
 
     let canvas,
@@ -94,6 +108,7 @@ const SootingGame = (() => {
         bulletImage,
         enemyImage,
         gameOverImage,
+        bossImage,
         fireImage,
         spaceshipX,
         spaceshipY,
@@ -102,7 +117,8 @@ const SootingGame = (() => {
         level = 1,
         gameOver = false, // true이면 게임이 끝남, false이면 게임이 안끝남
         bulletList = [], // 총알들을 저장하는 리스트
-        enemyList = [];
+        enemyList = [],
+        boss = false;
 
     /**
      * @description 초기화 함수
@@ -157,6 +173,9 @@ const SootingGame = (() => {
 
         fireImage = new Image();
         fireImage.src = images.fire;
+
+        bossImage = new Image();
+        bossImage.src = images.boss;
     }
 
     /**
@@ -294,6 +313,16 @@ const SootingGame = (() => {
         ctx.fillStyle = "white";
         ctx.font = "20px Arial";
 
+        if (level % 5 === 0) { // 5의 배수마다 보스 등장
+            enemyList = [];
+            boss = true;
+            ctx.drawImage(bossImage, 10, 100, 380, 280);
+        } else {
+            enemyList.forEach((enemy) => {
+                ctx.drawImage(enemyImage, enemy.x, enemy.y);
+            });
+        }
+
         bulletList.forEach((bullet) => {
             if (bullet.alive) {
                 ctx.drawImage(bulletImage, bullet.x, bullet.y);
@@ -303,10 +332,6 @@ const SootingGame = (() => {
                     bullet.fire = false;
                 }, 100);
             }
-        });
-
-        enemyList.forEach((enemy) => {
-            ctx.drawImage(enemyImage, enemy.x, enemy.y);
         });
     }
 
@@ -326,9 +351,15 @@ const SootingGame = (() => {
      * @returns {void}
      * @author Royi
      */
-    let _updateLevel = () => {
-        if ((score * level) % 5 === 0) {
-            level++;
+    let _updateLevel = (target) => {
+        if (target === "boss") {
+            if ((level * 10) === score) {
+                level++;
+            }
+        } else {
+            if ((score * level) % 5 === 0) {
+                level++;
+            }
         }
     }
 
@@ -438,6 +469,33 @@ const SootingGame = (() => {
         gameOver = true;
     }
 
+    /**
+     * @description 보스 존재여부 반환
+     * @type {function}
+     * @returns {Array}
+     * @author Royi 
+     */
+    let _getBoss = () => {
+        return boss;
+    }
+
+    /**
+     * @description 보스 이미지 값 조회
+     * @type {function}
+     * @returns {object} - 보스 이미지 가로, 높이 값 조회
+     * @author Royi
+     */
+    let _getBossImage = () => {
+        return {
+            width: bossImage.width,
+            height: bossImage.height
+        }
+    }
+
+    let _updateBoss = () => {
+        boss = false;
+    }
+
     return {
         init: init,
         getSpaceShipX: _getSpaceShipX,
@@ -450,7 +508,10 @@ const SootingGame = (() => {
         getCanvas: _getCanvas,
         setGameOver: _setGameOver,
         getEnemyImage: _getEnemyImage,
-        updateLevel: _updateLevel
+        updateLevel: _updateLevel,
+        getBoss: _getBoss,
+        getBossImage: _getBossImage,
+        updateBoss: _updateBoss
     }
 })();
 
